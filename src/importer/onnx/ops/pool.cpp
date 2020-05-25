@@ -52,15 +52,20 @@ namespace
 
 void onnx_importer::convert_op_AveragePool(const NodeProto& node)
 {
-    convert_pool(node, reduce_mean, 0.f);
+    convert_pool<>(node, reduce_mean, 0.f);
+}
+
+void onnx_importer::convert_op_GlobalAveragePool(const NodeProto& node)
+{
+    convert_pool<true>(node, reduce_mean, 0.f);
 }
 
 void onnx_importer::convert_op_MaxPool(const NodeProto& node)
 {
-    convert_pool(node, reduce_max, numeric_limits<float>::max());
+    convert_pool<>(node, reduce_max, numeric_limits<float>::max());
 }
 
-void onnx_importer::convert_pool(const NodeProto& node, const reduce_op_t reduce_op, const float init_value)
+template<bool global> void onnx_importer::convert_pool(const NodeProto& node, const reduce_op_t reduce_op, const float init_value)
 {
     const auto &input { node.input()[0] };
     const auto &output { node.output()[0] };
@@ -77,7 +82,10 @@ void onnx_importer::convert_pool(const NodeProto& node, const reduce_op_t reduce
 
     array<size_t, 2> dilations { 1, 1 };
 
-    const auto &kernel_shape { get_attribute<vector<int>>(node, "kernel_shape").value() };
+    const auto &kernel_shape
+    {
+        global ? vector<int> { static_cast<int>(input_shape[3]), static_cast<int>(input_shape[4]) } : get_attribute<vector<int>>(node, "kernel_shape").value()
+    };
 
     array<size_t, 2> strides { 1, 1 };
 
