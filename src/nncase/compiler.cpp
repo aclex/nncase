@@ -136,6 +136,11 @@ public:
     input_layout_ = options.input_layout;
 
 #define END_IMPORT() \
+    if (compile_options_.dump_ir)                      \
+    {                                                  \
+        std::ofstream f("ir_import.dot");              \
+        do_dump_graph(graph_, f);                      \
+    }                                                  \
     dump_graph(graph_, "import");
 
     void import_tflite(std::span<const uint8_t> model, const import_options &options) override
